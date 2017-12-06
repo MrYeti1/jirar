@@ -50,7 +50,7 @@ summaryResolvedMelt$variable <- factor(summaryResolvedMelt$variable, levels = re
 summaryResolvedMelt$resolutionMonthDisplay <- factor(summaryResolvedMelt[order(summaryResolvedMelt$resolutionMonth), "resolutionMonthDisplay"], levels=unique(summaryResolvedMelt[order(summaryResolvedMelt$resolutionMonth), "resolutionMonthDisplay"]))
 
 
-dwellPerc <- summaryResolvedMelt %>% filter(!is.na(resolutionMonth)) %>% mutate( dwell = grepl(".done|.out|release.validation", variable, ignore.case=T)) %>% 
+dwellPerc <- summaryResolvedMelt %>% filter(!is.na(resolutionMonth)) %>% mutate( dwell = grepl(".done|.out|release.validation|Ready.For.", variable, ignore.case=T)) %>% 
   group_by(resolutionMonth, resolutionMonthDisplay, dwell) %>% 
   summarise(total=sum(value, na.rm=T)) %>% mutate( perc = round(total/sum(total)*100)) %>% filter(dwell) %>% select(resolutionMonth, resolutionMonthDisplay, perc)
 
@@ -81,7 +81,7 @@ summaryResolvedMelt <- melt(summaryResolved, id=c("resolutionMonthDisplay", "res
 summaryResolvedMelt$variable <- factor(summaryResolvedMelt$variable, levels = rev(levels(summaryResolvedMelt$variable)))
 summaryResolvedMelt$resolutionMonthDisplay <- factor(summaryResolvedMelt[order(summaryResolvedMelt$resolutionMonth), "resolutionMonthDisplay"], levels=unique(summaryResolvedMelt[order(summaryResolvedMelt$resolutionMonth), "resolutionMonthDisplay"]))
 
-dwellPercMean <- summaryResolvedMelt %>% filter(!is.na(resolutionMonth)) %>% mutate( dwell = grepl(".done|.out|release.validation", variable, ignore.case=T)) %>% 
+dwellPercMean <- summaryResolvedMelt %>% filter(!is.na(resolutionMonth)) %>% mutate( dwell = grepl(".done|.out|release.validation|Ready.For.", variable, ignore.case=T)) %>% 
   group_by(resolutionMonth, resolutionMonthDisplay, dwell) %>% 
   summarise(total=sum(value, na.rm=T)) %>% mutate( perc = round(total/sum(total)*100)) %>% filter(dwell) %>% select(resolutionMonth, resolutionMonthDisplay, perc)
 

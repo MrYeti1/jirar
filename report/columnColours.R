@@ -12,6 +12,7 @@ statusColours <- c("secondsInColumns.Open" = "white", "secondsInColumns.Backlog"
                    "secondsInColumns.Elab.In" = "red", "secondsInColumns.Elab.Out" = "white",
                    
                    "secondsInColumns.3.Amigos.In" = "red", "secondsInColumns.3.Amigos.Out" = "white",
+ "secondsInColumns.Ready.for.Dev" = "white",
                    "secondsInColumns.Implementation.In" = "orange", "secondsInColumns.Prioritised" = "orange",
                    "secondsInColumns.Imp.In" = "orange",
                    "secondsInColumns.Build.In" = "orange",
@@ -19,15 +20,18 @@ statusColours <- c("secondsInColumns.Open" = "white", "secondsInColumns.Backlog"
  "secondsInColumns.Implementation.Out" = "white", 
  "secondsInColumns.Imp.Out" = "white",
  "secondsInColumns.Build.Done" = "white",
+ "secondsInColumns.Ready.For.Code.Review" = "white",
 
  "secondsInColumns.Implementation.Done" = "white","secondsInColumns.Demo.d" = "white",
                    "secondsInColumns.In.Progress" = "orange",
                    
                    "secondsInColumns.Review.In" = "#ffc966", "secondsInColumns.Review.Out" = "white",
+                   "secondsInColumns.In.Code.Review" = "#ffc966",
                    "secondsInColumns.Code.Review.In" = "#ffc966", "secondsInColumns.Code.Review.Out" = "white",
                    "secondsInColumns.Tech.Review.In" = "#ffc966", "secondsInColumns.Tech.Review.Done" = "white",
                    "secondsInColumns.Code.Review.Done" = "white",
                    "secondsInColumns.Awaiting.Review" = "#ffc966", "secondsInColumns.Review.Done" = "white",                           "secondsInColumns.Raise.Change" = "#ffc966", "secondsInColumns.Change.Wait" = "white",
+                   "secondsInColumns.Ready.for.Test" = "white",
 
                    "secondsInColumns.Code.Review...Demo.In" = "#ffc966", "secondsInColumns.Code.Review...Demo.Out" = "white",
                    "secondsInColumns.In.Review" = "#ffc966",
@@ -36,12 +40,13 @@ statusColours <- c("secondsInColumns.Open" = "white", "secondsInColumns.Backlog"
                    "secondsInColumns.UAT.Test.In" = "#ffc966", "secondsInColumns.UAT.Test.Done" = "white",
                    "secondsInColumns.BR.In" = "#ffc966", "secondsInColumns.BR.Done" = "white",
  
-                   
+                   "secondsInColumns.In.Test" = "yellow",
                    "secondsInColumns.Test.In" = "yellow", "secondsInColumns.Test.Out" = "white",
                    "secondsInColumns.Testing.In" = "yellow", "secondsInColumns.Testing.Done" = "white",
                    "secondsInColumns.Test.Done" = "white",
                     "secondsInColumns.Functional.Test.In" = "yellow",
                     "secondsInColumns.Functional.Test.Done" = "white",
+                    "secondsInColumns.Ready.For.Live" = "white",
                    
                    "secondsInColumns.Merged" = "green",
                     "secondsInColumns.Merge.In" = "green",
@@ -71,9 +76,10 @@ statusColours <- c("secondsInColumns.Open" = "white", "secondsInColumns.Backlog"
                    "secondsInColumns.Release" = "#55bb55",
                    "secondsInColumns.Change.Imp" = "#55bb55",
                    "secondsInColumns.Release.Validation" = "#ddffdd",
+                   "secondsInColumns.In.Live" = "#55bb55",
                    
                    "secondsInColumns.Closed" = "#666666",
                    "secondsInColumns.Resolved" = "#666666",
-                    "secondsInColumns.Done" = "#666666"
+                   "secondsInColumns.Done" = "#666666"
 
 )
