@@ -28,7 +28,7 @@ then
     parentSpace="TBT"
 fi
 
-if [[ "$SQUAD" == "BCT" || "$SQUAD" == "PBP"  ]]
+if [[ "$SQUAD" == "BCT" || "$SQUAD" == "PBP"  || "$SQUAD" == "MB" ]]
 then
     parentPage=46269728
     parentSpace="TBT"
