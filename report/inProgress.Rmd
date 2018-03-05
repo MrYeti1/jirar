@@ -1,0 +1,78 @@
+# Active Tickets
+
+A guess at the number of active tickets per week.
+It is assumed that tickets were not removed from the board, unless they were resolved.
+
+```{r, echo=FALSE, warning=FALSE, error=FALSE, include=F}
+
+library(ggplot2)
+library(dplyr)
+library(reshape2)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, error=FALSE, message=F}
+project <- Sys.getenv("PROJECT", NA)
+#project <- "TS"
+if(is.na(project)) {
+  project <- ""
+} else { 
+  project <- paste0("-", project)
+}
+datasetFile <- paste0("../jiraData/jiraRDataset", project, ".csv")
+#datasetFile <- paste0("/Users/grovesro/Desktop/jiraR/jiraData/jiraRDataset", project, ".csv")
+
+source("columnColours.R")
+
+tsTickets <- read.csv(datasetFile, header=T, skipNul=T, na.strings="") %>%
+  mutate(
+    created = as.POSIXct(created), 
+    createdMonthDisplay = format(created, format="%Y %B"),
+    createdMonth = as.numeric(format(created, format="%Y%m")),
+    resolutionDate = as.POSIXct(resolutionDate), 
+    resolutionMonthDisplay = format(resolutionDate, format="%Y %B"),
+    resolutionMonth = as.numeric(format(resolutionDate, format="%Y%m")),
+    totalTime = resolutionDate - created
+  ) %>% filter(status != "Closed") %>% filter(status != "to do") %>% filter(status != "open") %>% filter(ticketType != "Epic") %>%
+  select(-spend, -one_of(c("secondsInColumns.Open", "secondsInColumns.New", "secondsInColumns.Next.Up", "secondsInColumns.Backlog", "secondsInColumns.Resolved", "secondsInColumns.Reopened", "secondsInColumns.Closed", "secondsInColumns.Done", "secondsInColumns.Coming.Next"))) 
+
+#Get all "SecondsInColumns" data, then drop columns where we aren't working on it
+workedColumns <- tsTickets %>% select(starts_with("SecondsInColumn")) %>%
+  select( -one_of(c("secondsInColumns.Backlog", "secondsInColumns.Next.Up", "secondsInColumns.New", "secondsInColumns.Done", "secondsInColumns.Closed", "secondsInColumns.Resolved", "secondsInColumns.Open", "secondsInColumns.Reopened")))
+
+
+
+#Add up time in all the working columns
+tsTickets$workTime <- apply(workedColumns, FUN="sum", MARGIN=1, na.rm=T)
+
+tsTickets <- tsTickets %>% mutate(
+  resolutionDateOrNow = ifelse(is.na(resolutionDate), Sys.time(), resolutionDate),
+  startTime = as.POSIXct(
+    resolutionDateOrNow - (workTime/1000), 
+    origin="1970-01-01"), 
+  startDate = as.Date.POSIXct(startTime)
+)
+
+```
+
+Active tickets are included if they have been in the following columns: `r paste(
+  gsub("secondsInColumns.", "", colnames(workedColumns)),
+  collapse=", ")`
+```{r, comment="", echo=FALSE, warning=FALSE, error=FALSE, message=F}
+
+
+a <- tsTickets %>% mutate(resolutionDateOrNow = as.Date(as.POSIXct(resolutionDateOrNow, origin="1970-01-01"))) %>% group_by(key) %>% transmute(days=list(seq(from=startDate, to=resolutionDateOrNow, by="day")))
+
+b <- a %>% tidyr::unnest() %>% mutate(days=as.POSIXct(days))
+
+yearRange <- range(b$days) %>% strftime(format="%Y") %>% as.numeric()
+ggplot(b, aes(x=days)) + 
+  geom_histogram(binwidth=60*60*24*7) +
+
+  geom_vline(xintercept=as.numeric(as.POSIXct(paste0(seq(yearRange[1], yearRange[2]), "-01-01"))), color="grey80", linetype="dashed") +
+  ggtitle("Active Tickets Per Week") + 
+  xlab("Time") + ylab("Number of active tickets") +
+  scale_x_datetime(date_breaks="2 months") + 
+  theme(axis.text.x = element_text(angle=60, hjust=1))
+
+```

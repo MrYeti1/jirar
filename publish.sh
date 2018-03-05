@@ -22,13 +22,13 @@ then
     
 fi
 
-if [[ "$SQUAD" == "VBS" || "$SQUAD" == "HRS" || "$SQUAD" == "NGU" || "$SQUAD" == "SBP" || "$SQUAD" == "TE" || "$SQUAD" == "BMA" ]]
+if [[ "$SQUAD" == "VBS" || "$SQUAD" == "HRS" || "$SQUAD" == "NGU" || "$SQUAD" == "SBP" || "$SQUAD" == "BCF" || "$SQUAD" == "BMA" || "$SQUAD" == "HRNG" ]]
 then
     parentPage=46269728
     parentSpace="TBT"
 fi
 
-if [[ "$SQUAD" == "BCT" || "$SQUAD" == "PBP"  || "$SQUAD" == "MB" ]]
+if [[ "$SQUAD" == "BCT" || "$SQUAD" == "PBP"  || "$SQUAD" == "MB" || "$SQUAD" == "BCS" || "$SQUAD" == "BPR" ]]
 then
     parentPage=46269728
     parentSpace="TBT"
@@ -68,6 +68,8 @@ printf '</div>]]>ViewTracker here</ac:plain-text-body></ac:structured-macro><ac:
             labelPost="[$( echo $labels | sed 's/\([^,]*\)/{"prefix": "global", "name":"\1"}/g')]"
             curl -s -S -H "Authorization: Basic $SECRET" -X POST -H 'Content-Type: application/json' -d"$labelPost" ${CONFLUENCEREST}api/content/$pageId/label
 
+        else
+            echo $response
         fi
 
     else

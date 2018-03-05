@@ -10,6 +10,7 @@ statusColours <- c("secondsInColumns.Open" = "white", "secondsInColumns.Backlog"
                    "secondsInColumns.Test.Analysis.Done" = "white",
                    "secondsInColumns.Elaboration.In" = "red", "secondsInColumns.Elaboration.Out" = "white", "secondsInColumns.Elaboration..Out" = "white", "secondsInColumns.Elaboration.Done" = "white",
                    "secondsInColumns.Elab.In" = "red", "secondsInColumns.Elab.Out" = "white",
+                   "secondsInColumns.Tech.Elab.In" = "red", "secondsInColumns.Tech.Elab.Out" = "white",
                    
                    "secondsInColumns.3.Amigos.In" = "red", "secondsInColumns.3.Amigos.Out" = "white",
  "secondsInColumns.Ready.for.Dev" = "white",

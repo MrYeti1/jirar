@@ -14,6 +14,9 @@ output:
 ```{r child = 'classOfWork.Rmd'}
 ```
 
+```{r child = 'inProgress.Rmd'}
+```
+
 ```{r child = 'controlChart.Rmd'}
 ```
 

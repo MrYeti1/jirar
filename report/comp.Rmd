@@ -1,0 +1,46 @@
+# Comp
+
+```{r, echo=FALSE, warning=FALSE, error=FALSE, include=F}
+
+library(ggplot2)
+library(dplyr)
+library(reshape2)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, error=FALSE}
+project <- Sys.getenv("PROJECT", NA)
+project <- "TS"
+if(is.na(project)) {
+  project <- ""
+} else { 
+  project <- paste0("-", project)
+}
+datasetFile <- paste0("../jiraData/jiraRDataset", project, ".csv")
+
+source("columnColours.R")
+
+tsTickets <- read.csv(datasetFile, header=T, skipNul=T, na.strings="") %>%
+  mutate(
+    created = as.POSIXct(created), 
+    createdMonthDisplay = format(created, format="%Y %B"),
+    createdMonth = as.numeric(format(created, format="%Y%m")),
+    resolutionDate = as.POSIXct(resolutionDate), 
+    resolutionMonthDisplay = format(resolutionDate, format="%Y %B"),
+    resolutionMonth = as.numeric(format(resolutionDate, format="%Y%m")),
+    totalTime = resolutionDate - created
+  ) %>% filter(status != "Closed") %>% filter(status != "to do") %>% filter(status != "open") %>% filter(ticketType != "Epic") %>%
+  select(-spend, -one_of(c("secondsInColumns.Open", "secondsInColumns.New", "secondsInColumns.Next.Up", "secondsInColumns.Backlog", "secondsInColumns.Resolved", "secondsInColumns.Reopened", "secondsInColumns.Closed", "secondsInColumns.Done", "secondsInColumns.Coming.Next"))) 
+```
+
+```{r}
+ggplot(tsTickets, aes(x=secondsInColumns.3.Amigos.In, y=totalTime)) + geom_jitter(alpha=0.3) + geom_smooth() 
+```
+
+```{r}
+ggplot(tsTickets, aes(x=secondsInColumns.Implementation.In, y=totalTime)) + geom_jitter(alpha=0.3) + geom_smooth() 
+```
+
+```{r}
+ggplot(tsTickets, aes(x=secondsInColumns.3.Amigos.In, y=secondsInColumns.Implementation.In)) + geom_jitter(alpha=0.3) + geom_smooth() 
+```
