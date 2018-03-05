@@ -50,63 +50,54 @@ function getBoardColumns(bootstrap, next) {
     });
 };
 
+function getStatusMapping(bootstrap, next) {
+    var project = bootstrap.bootstrap.project;
+    var jiraApi = bootstrap.bootstrap.jiraApi;
+    var authHeader = bootstrap.bootstrap.authHeader;
+    var boardId = bootstrap.getBoardId;
+
+    console.log("Requesting Status Mapping for project: " + boardId);
+    var req = request({
+        baseUrl: jiraApi,
+        uri: "api/2/status",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": authHeader
+        },
+        json: true
+    }, function(err, res, body) {
+
+        //TODO change this flow so next won't get called twice
+        dealWithJiraResponse(err, req, res, body, next);
+
+        var statusMapping = body.reduce(function(statuses, status) { 
+            statuses[status.id] = status.name;
+            return statuses;
+        }, {});
+        return next(null, statusMapping);
+    });
+};
+
+
 function getTransitions(bootstrap, next) {
+
+    //Get board config
+    // foreach status id, get the status name
     var project = bootstrap.bootstrap.project;
     var jiraApi = bootstrap.bootstrap.jiraApi;
     var authHeader = bootstrap.bootstrap.authHeader;
 
-    console.log("Requesting first issue for transitions key for project: " + project);
-    var reqFirst = request({
-        baseUrl: jiraApi,
-        uri: "api/2/search?jql=project=" + project + "&maxResults=1&startAt=0&issueType=story",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": authHeader
+    async.parallel({
+            boardColumns: (done) => getBoardColumns(bootstrap, done),
+            statusMappings: (done) => getStatusMapping(bootstrap, done)
         },
-        json: true
-    }, function(err, res, body) {
-        dealWithJiraResponse(err, reqFirst, res, body, next);
-
-        key = body.issues[0].key;
-
-    // https://jira.example.com/jira/rest/api/2/issue/TS-1020/transitions
-    console.log("Requesting transitions for project: " + project);
-    var req = request({
-        baseUrl: jiraApi,
-        uri: "api/2/issue/" + key + "/transitions",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": authHeader
-        },
-        json: true
-    }, function(err, res, body) {
-        dealWithJiraResponse(err, req, res, body, next);
-
-        var unOrderedProjectCategories = body.transitions.reduce(function(prev, cat) {
-            var id = cat.to.id;
-            prev[id] = { name: cat.to.name, id: id, color: cat.to.statusCategory.colorName };
-            return prev;
-        }, {});
-
-        // :( because BCTDR doesn't have Backlog in the transitions response
-        unOrderedProjectCategories[10001] = unOrderedProjectCategories[10001] || "Backlog"
-
-        getBoardColumns(bootstrap, function(err, columns) {
-            //var workingProjectCategories = unOrderedProjectCategories.slice(); //Clone
-            if (err) { return next(err); }
-
-            projectCategories = columns.map(function(statusId) {
-                if (!unOrderedProjectCategories[statusId]) { return }
-                else { return unOrderedProjectCategories[statusId].name } 
+        function(err, results) {
+            var orderedColumns = results.boardColumns.map((statusId) => {
+                return results.statusMappings[statusId];
             });
-
-            return next(err, projectCategories);
-
-
-        });
-
-        });
-    });
+            next(err, orderedColumns);
+        }
+    );
 }
 
 function getNumberOfTickets(bootstrap, next) {

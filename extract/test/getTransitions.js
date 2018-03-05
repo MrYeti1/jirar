@@ -6,10 +6,11 @@ describe("getTransitions", function() {
     describe("TS", function() { 
         beforeEach(function() { 
             var transitions = require("./projectTransitions-TS");
+            var statuses = require("./statuses.js");
             var boardColumns = require("./boardColumns-TS");
             var nockJira = nock('http://test')
-                    .get('/api/2/issue/TS-11/transitions')
-                    .reply(200, transitions)
+                    .get('/api/2/status')
+                    .reply(200, statuses)
 
                     .get('/agile/1.0/board/290/configuration')
                     .reply(200, boardColumns);
@@ -20,7 +21,6 @@ describe("getTransitions", function() {
             issueScraper.getTransitions(bootstrap, function(err, projectCategories) {
 
 expectedCategories = [ 'Open', 'Reopened', '3 Amigos In', '3 Amigos Out', 'Implementation In', 'Implementation Out', 'Review In', 'Review Out', 'Test In', 'Test Out', 'Merged', 'Deployed to Test Environment', 'Deployed to Staging Environment', 'Release Validation', 'Resolved', 'Closed' ]
-    //expectedCategories = [ 'Open', 'In Progress', 'Analysis In', 'Analysis Out', 'Elaboration In', 'Elaboration Out', 'Test Analysis In', 'Test Analysis Out', '3 Amigos In', '3 Amigos Out', 'Implementation In', 'Implementation Out', 'Review In', 'Review Out', 'Demo In', 'Demo Out', 'Test In', 'Test Out', 'Deploy To Test In', 'Deploy to Test Out', 'UAT In', 'UAT Out', 'Merged', 'Deployed to Test Environment', 'Deployed to Staging Environment', 'Release', 'Release Validation', 'Resolved', 'Reopened', 'Closed' ];
 
                 assert.deepEqual(projectCategories, expectedCategories);
 
@@ -29,16 +29,17 @@ expectedCategories = [ 'Open', 'Reopened', '3 Amigos In', '3 Amigos Out', 'Imple
         });
     });
 
-    describe("PE", function() { 
-        beforeEach(function() { 
+    describe("PE", function() {
+        beforeEach(function() {
             var transitions = require("./projectTransitions-PE");
+            var statuses = require("./statuses.js");
             var boardColumns = require("./boardColumns-PE");
             var nockJira = nock('http://test')
-                    .get('/api/2/issue/PE-11/transitions')
-                    .reply(200, transitions)
-
                     .get('/agile/1.0/board/357/configuration')
-                    .reply(200, boardColumns);
+                    .reply(200, boardColumns)
+
+                    .get('/api/2/status')
+                    .reply(200, statuses);
 
         });
         it("getTransitions", function(done) {
