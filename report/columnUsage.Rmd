@@ -6,16 +6,11 @@ library(ggplot2)
 library(dplyr)
 library(reshape2)
 
-source("columnColours.R")
-
-statusLabels <- gsub("secondsInColumns.", "", names(statusColours))
-names(statusLabels) <- names(statusColours)
-
+source("columnGuess.R")
 
 ```
 
 ```{r, echo=FALSE, warning=FALSE, error=FALSE}
-
 project <- Sys.getenv("PROJECT", NA)
 #project <- "GP"
 if(is.na(project)) {
@@ -50,6 +45,8 @@ blah <- melt(as.list(resolvedTickets %>% select( contains("secondsInColumns")) %
 library(forcats)
 blah$L1 <- forcats::fct_inorder(blah$L1)
 
+statusLabels <- gsub("secondsInColumns.", "", blah$L1)
+names(statusLabels) <- blah$L1
 
 ggplot(blah, aes(x=L1, y=value)) + geom_col() + theme(legend.position = "bottom", axis.text.x = element_text(angle=60, hjust=1)) + ggtitle("Column Usage") + xlab("Column") +ylab("Number of tickets") + scale_x_discrete(labels=statusLabels)
 ```
@@ -61,7 +58,7 @@ byMonth <- resolvedTickets %>%
   group_by(resolutionMonth, resolutionMonthDisplay) %>% 
   select( resolutionMonth, resolutionMonthDisplay, contains("secondsInColumns")) %>% 
   select(-contains("out")) %>%
-  summarise_each(funs(count_na)) %>%
+  summarise_all(funs(count_na)) %>%
   filter(!is.na(resolutionMonth)) %>% filter(resolutionMonth != latestMonth)
 
 if (nrow(byMonth)) { 
@@ -78,11 +75,17 @@ byMonthMelt <- melt(byMonth, id=c("resolutionMonth", "resolutionMonthDisplay"))
 naByMonthMelt <- byMonthMelt
 naByMonthMelt[naByMonthMelt == 0] <- NA
 
+load(file="colColourFit.Rdata")
+load(file="colColourTdm.Rdata")
+
+guessedStatusColours <- guessColumnColours(naByMonthMelt$variable %>% unique, colColourFit, colColourTdm)
+
+
 ggplot(naByMonthMelt, aes(x=resolutionMonthDisplay, y=value, color=variable, group=variable))  + 
   theme(legend.position = "bottom", axis.text.x = element_text(angle=60, hjust=1)) +
   scale_x_discrete() + 
   ylab("Number of tickets visiting a column") + xlab("Month") + ggtitle("Column Usage over time") +
-  scale_color_manual(values=statusColours, na.value="gray", labels=statusLabels, name="Column") +
+  scale_color_manual(values=guessedStatusColours, na.value="gray", labels=statusLabels, name="Column") +
   geom_line(linetype="dashed", alpha=0.2) + 
   geom_smooth(se=F, fullrange=F, span=1, method="loess")
  # geom_point() 

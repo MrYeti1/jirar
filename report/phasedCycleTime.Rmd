@@ -5,6 +5,7 @@
 library(ggplot2)
 library(dplyr)
 library(reshape2)
+source("columnGuess.R")
 
 ```
 
@@ -18,7 +19,6 @@ if(is.na(project)) {
 }
 datasetFile <- paste0("../jiraData/jiraRDataset", project, ".csv")
 
-source("columnColours.R")
 
 tsTickets <- read.csv(datasetFile, header=T, skipNul=T, na.strings="") %>%
   mutate(
@@ -33,9 +33,6 @@ tsTickets <- read.csv(datasetFile, header=T, skipNul=T, na.strings="") %>%
   select( -totalTime, -spend, -one_of(c("secondsInColumns.Open", "secondsInColumns.New", "secondsInColumns.Next.Up", "secondsInColumns.Backlog", "secondsInColumns.Resolved", "secondsInColumns.Reopened", "secondsInColumns.Closed", "secondsInColumns.Done", "secondsInColumns.Coming.Next"))) 
 
 
-
-statusLabels <- gsub("secondsInColumns.", "", names(statusColours))
-names(statusLabels) <- names(statusColours)
 
 
 summaryResolved <- tsTickets %>% 
@@ -57,12 +54,21 @@ dwellPerc <- summaryResolvedMelt %>% filter(!is.na(resolutionMonth)) %>% mutate(
 dateDwell <- paste0(dwellPerc$resolutionMonthDisplay, " - (", dwellPerc$perc, "% dwell)")
 names(dateDwell) <- dwellPerc$resolutionMonthDisplay
 
+load(file="colColourFit.Rdata")
+load(file="colColourTdm.Rdata")
+
+guessedStatusColours <- guessColumnColours(summaryResolvedMelt$variable %>% unique(), colColourFit, colColourTdm)
+
+statusLabels <- gsub("secondsInColumns.", "", names(guessedStatusColours))
+names(statusLabels) <- names(guessedStatusColours)
+numLabelRows <- (names(guessedStatusColours) %>% stringi::stri_length() %>% sum() / 130) %>% ceiling()
+
 summaryResolvedMelt %>%
   filter(! is.na(resolutionMonth)) %>% #Only show resolved tickets
   ggplot(aes(x=resolutionMonthDisplay, y=value/24/60/60/1000)) + 
   geom_bar(stat="identity", aes(fill=variable)) + ylab("days") + xlab("month") +
-  theme(legend.position = "bottom") + scale_fill_manual(values=statusColours, na.value="gray", labels=statusLabels, name="Column") + coord_flip() + scale_x_discrete(labels=dateDwell) + expand_limits(0) +
-  guides(fill=guide_legend(reverse=TRUE)) + ggtitle("Median Phased Cycle Time - Resolved Date")
+  theme(legend.position = "bottom") + scale_fill_manual(values=guessedStatusColours, na.value="gray", labels=statusLabels, name="Column") + coord_flip() + scale_x_discrete(labels=dateDwell) + expand_limits(0) +
+  guides(fill=guide_legend(reverse=TRUE,title=NULL, byrow=F)) + ggtitle("Median Phased Cycle Time - Resolved Date")
 
     
 
@@ -93,8 +99,8 @@ summaryResolvedMelt %>%
   filter(! is.na(resolutionMonth)) %>% #Only show resolved tickets
   ggplot(aes(x=resolutionMonthDisplay, y=value/24/60/60/1000)) +
   geom_bar(stat="identity", aes(fill=variable)) + ylab("days") + xlab("month") +
-  theme(legend.position = "bottom") + scale_fill_manual(values=statusColours, na.value="gray", labels=statusLabels, name="Column") + coord_flip() + scale_x_discrete(labels=dateDwellMean) +
-  guides(fill=guide_legend(reverse=TRUE)) + ggtitle("Mean Phased Cycle Time - Resolved Date")
+  theme(legend.position = "bottom", legend.justification = "left") + scale_fill_manual(values=guessedStatusColours, na.value="gray", labels=statusLabels, name="Column") + coord_flip() + scale_x_discrete(labels=dateDwellMean) +
+  guides(fill=guide_legend(reverse=TRUE,title=NULL,byrow=F)) + ggtitle("Mean Phased Cycle Time - Resolved Date")
 ```
 
 ```{r, echo=FALSE, warning=FALSE, error=FALSE}

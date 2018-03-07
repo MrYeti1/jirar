@@ -75,32 +75,35 @@ ggplot(filter(tsTickets, ! is.na(resolutionMonthDisplay)), aes(x=resolutionMonth
 ```
 
 ```{r, echo=FALSE, warning=FALSE, error=FALSE, message=F, fig.height=6}
-source("columnColours.R")
+source("columnGuess.R")
 
-statusLabels <- gsub("secondsInColumns.", "", names(statusColours))
-names(statusLabels) <- names(statusColours)
+statusLabels <- gsub("secondsInColumns.", "", names(workedColumns))
+names(statusLabels) <- names(workedColumns)
 
+load(file="colColourFit.Rdata")
+load(file="colColourTdm.Rdata")
+
+guessedStatusColours <- guessColumnColours(names(statusLabels), colColourFit, colColourTdm)
 
 #Join the working seconds in columns fields back with resolutionDate
 controlColumns <- bind_cols(select(tsTickets, key, resolutionDate), workedColumns) %>%
   filter(! is.na(resolutionDate) ) %>% 
   filter( resolutionDate > ymd(Sys.Date(), tz="Europe/London") %m-% months(3) )
 
-nrow(controlColumns)
 if (nrow(controlColumns) > 0) {
-#Melt for plotting
-workedMelt <- melt(controlColumns, id=c("key", "resolutionDate"))
+  #Melt for plotting
+  workedMelt <- melt(controlColumns, id=c("key", "resolutionDate"))
 
 
-base_breaks <- function(n = 10){
-    function(x) {
-        axisTicks(log10(range(x, na.rm = TRUE)), log = TRUE, nint = n)
-    }
-}
+  base_breaks <- function(n = 10){
+      function(x) {
+          axisTicks(log10(range(x, na.rm = TRUE)), log = TRUE, nint = n)
+      }
+  }
 
-ggplot(workedMelt, aes(x=resolutionDate, y=value/1000/60/60/24, color=variable)) + geom_point() + ylab("Hours") + xlab("Resolution Date") + facet_wrap(~variable, ncol=2, scales="free_y") +
-  scale_color_manual(values=statusColours, na.value="gray", labels=statusLabels, name="Column") + theme(legend.position="None") + geom_smooth(na.rm = T, se=T) + 
-  scale_y_continuous(labels=prettyNum)
+  ggplot(workedMelt, aes(x=resolutionDate, y=value/1000/60/60/24, color=variable)) + geom_point() + ylab("Hours") + xlab("Resolution Date") + facet_wrap(~variable, ncol=2, scales="free_y") +
+    scale_color_manual(values=guessedStatusColours, na.value="gray", labels=statusLabels, name="Column") + theme(legend.position="None") + geom_smooth(na.rm = T, se=T) +
+    scale_y_continuous(labels=prettyNum)
 }
 
 ```
