@@ -80,12 +80,12 @@ source("columnColours.R")
 statusLabels <- gsub("secondsInColumns.", "", names(statusColours))
 names(statusLabels) <- names(statusColours)
 
-library(lubridate)
 
 #Join the working seconds in columns fields back with resolutionDate
 controlColumns <- bind_cols(select(tsTickets, key, resolutionDate), workedColumns) %>%
   filter(! is.na(resolutionDate) ) %>% 
-  filter( resolutionDate > ymd(Sys.Date()) %m-% months(3) )
+  filter( resolutionDate > ymd(Sys.Date(), tz="Europe/London") %m-% months(3) )
+
 nrow(controlColumns)
 if (nrow(controlColumns) > 0) {
 #Melt for plotting
@@ -113,16 +113,16 @@ library(forcats)
   classOfWorkTickets$resolutionMonthDisplay <- factor(tsTickets[order(tsTickets$resolutionMonth), "resolutionMonthDisplay"], levels=unique(tsTickets[order(tsTickets$resolutionMonth), "resolutionMonthDisplay"]))
   
   #Reorder so capex is on the bottom, NA on the top
-  classOfWorkTickets$spendDisplay <- fct_relevel(addNA(classOfWorkTickets$spend), NA, "OPEX", "CAPEX")
+  classOfWorkTickets$spendDisplay <- fct_relevel(fct_explicit_na(addNA(classOfWorkTickets$spend), "NA"), "NA", "OPEX", "CAPEX")
   
  if (levels(classOfWorkTickets$spendDisplay) %>% length() > 1) {
 
   
-  ggplot(filter(classOfWorkTickets, ! is.na(resolutionMonthDisplay)), aes(x=resolutionMonthDisplay, fill=NA)) + scale_fill_discrete(name=NULL) +
-    geom_bar(stat="count", position="fill") + theme(legend.position = "bottom", axis.text.x = element_text(angle=60, hjust=1)) + 
-    ggtitle("Spend Distribution - Completed Tickets") + xlab("Resolution Month") + ylab("Spend %")
+ # ggplot(filter(classOfWorkTickets, ! is.na(resolutionMonthDisplay)), aes(x=resolutionMonthDisplay, fill=NA)) + scale_fill_discrete(name=NULL) +
+#    geom_bar(stat="count", position="fill") + theme(legend.position = "bottom", axis.text.x = element_text(angle=60, hjust=1)) + 
+#    ggtitle("Spend Distribution - Completed Tickets") + xlab("Resolution Month") + ylab("Spend %")
   
-    ggplot(filter(classOfWorkTickets, ! is.na(resolutionMonthDisplay)), aes(x=resolutionMonthDisplay, y=workTime, fill=spendDisplay)) + scale_fill_discrete(name=NULL) +
+    ggplot(filter(classOfWorkTickets, ! is.na(resolutionMonthDisplay)), aes(x=resolutionMonthDisplay, y=workTime, fill=spendDisplay)) + scale_fill_manual(name=NULL, values=c("OPEX"="#F8766D", "CAPEX"="#00BFC4", "NA"="grey50")) +
     geom_bar(position="fill", stat="identity") + theme(legend.position = "bottom", axis.text.x = element_text(angle=60, hjust=1)) + 
     ggtitle("Spend Distribution - Worked Time") + xlab("Resolution Month") + ylab("Spend %")
  }

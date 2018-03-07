@@ -40,7 +40,7 @@ if("ggforce" %in% rownames(installed.packages())) {
     filter(status != "open") %>%
     filter(ticketType != "Epic") %>% arrange(resolutionMonth)
   
-  recentTickets <- tsTickets %>% filter(resolutionDate > (lubridate::now() - lubridate::days(30*2)))
+  recentTickets <- tsTickets %>% filter(resolutionDate > (lubridate::now(tz="Europe/London") - lubridate::days(30*2)))
   #Cubic Bezier takes three points, start date, bezierTarget/midpoint, end date
   if (nrow(recentTickets)) {
     tsJumpDates <- recentTickets %>% mutate(midDate = as.POSIXct(created + floor((resolutionDate-created)/2))) %>% select(created, midDate, resolutionDate)
@@ -77,7 +77,7 @@ if("ggforce" %in% rownames(installed.packages())) {
 ```
 
 ```{r, echo=FALSE, warning=FALSE, error=FALSE}
-recentTickets <- tsTickets %>% filter(resolutionDate > (lubridate::now() - lubridate::days(30*2))) %>% select(-one_of("secondsInColumns.Open", "secondsInColumns.Reopened", "secondsInColumns.Resolved", "secondsInColumns.Closed"))
+recentTickets <- tsTickets %>% filter(resolutionDate > (lubridate::now(tz="Europe/London") - lubridate::days(30*2))) %>% select(-one_of("secondsInColumns.Open", "secondsInColumns.Reopened", "secondsInColumns.Resolved", "secondsInColumns.Closed"))
 if (nrow(recentTickets)) {
   count_na <- function(x) sum(!is.na(x))
   blah <- melt(as.list(recentTickets %>% select( contains("secondsInColumns")) %>% apply(., 2,count_na)))
