@@ -1,0 +1,4 @@
+From jirar-extract:dev
+
+COPY boardList.js /usr/src/app
+COPY customFields.js /usr/src/app

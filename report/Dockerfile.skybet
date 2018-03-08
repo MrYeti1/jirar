@@ -1,0 +1,7 @@
+From jirar-report:dev
+RUN mkdir -p /home/user/jiraR/report
+COPY *.Rmd /home/user/jiraR/report/
+COPY columnGuess.R /home/user/jiraR/report/
+COPY *.Rdata /home/user/jiraR/report/
+COPY init.R /home/user/jiraR/
+CMD ["Rscript", "/home/user/jiraR/init.R"]

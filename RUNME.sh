@@ -28,20 +28,26 @@ then
     echo "Copied atlassianDetails.sh.example as atlassianDetails.sh doesn't exist"
 fi
 
-
-#Source in the $JIRAREST and $CONFLUENCEREST variables
-. ./atlassianDetails.sh
-
-SECRET=$SECRET PROJECT=$SQUAD JIRAREST=$JIRAREST docker run -e SECRET -e PROJECT -e JIRAREST -v $(pwd)/jiraData/:/usr/src/app/jiraData/ -v $(pwd)/extract/boardList.js:/usr/src/app/boardList.js  -v $(pwd)/extract/customFields.js:/usr/src/app/customFields.js jirar-extract
-
-PROJECT=$SQUAD docker run -e PROJECT -v $(pwd):/home/user/jiraR jirar-report
-
 if [ ! -d jiraReport ]
 then
     mkdir -p jiraReport
 fi
 
-mv report/jiraR.html jiraReport/jiraR-$SQUAD.html
+#Source in the $JIRAREST and $CONFLUENCEREST variables
+. ./atlassianDetails.sh
+
+DEVMODE=false
+if $DEVMODE
+then
+    SECRET=$SECRET PROJECT=$SQUAD JIRAREST=$JIRAREST docker run -e SECRET -e PROJECT -e JIRAREST -v $(pwd)/jiraData/:/usr/src/app/jiraData/ -v $(pwd)/extract/boardList.js:/usr/src/app/boardList.js  -v $(pwd)/extract/customFields.js:/usr/src/app/customFields.js jirar-extract:dev
+    PROJECT=$SQUAD docker run -e PROJECT -v $(pwd):/home/user/jiraR jirar-report:dev
+else
+    #Not dev-mode - use published images. Containing pre-built files
+    SECRET=$SECRET PROJECT=$SQUAD JIRAREST=$JIRAREST docker run -e SECRET -e PROJECT -e JIRAREST -v $(pwd)/jiraData/:/usr/src/app/jiraData/ $DOCKERREPO/grovesro/jirar/jirar-extract:skybet
+    PROJECT=$SQUAD docker run -e PROJECT -v $(pwd)/jiraReport:/home/user/jiraR/jiraReport/ -v $(pwd)/jiraData/:/home/user/jiraR/jiraData/ $DOCKERREPO/grovesro/jirar/jirar-report:skybet
+fi
+
+mv jiraReport/jiraR.html jiraReport/jiraR-$SQUAD.html
 
 sh ./publish.sh $CONFLUENCEREST $SECRET $SQUAD $PUBLISH
 

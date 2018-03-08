@@ -22,8 +22,6 @@ if(is.na(project)) {
 datasetFile <- paste0("../jiraData/jiraRDataset", project, ".csv")
 #datasetFile <- paste0("/Users/grovesro/Desktop/jiraR/jiraData/jiraRDataset", project, ".csv")
 
-source("columnColours.R")
-
 tsTickets <- read.csv(datasetFile, header=T, skipNul=T, na.strings="") %>%
   mutate(
     created = as.POSIXct(created), 
