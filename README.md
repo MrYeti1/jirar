@@ -17,8 +17,17 @@ sh ./RUNME.sh <randombase64hash> TS PUBLISH
 
 # Examples
 
-...
+Tickets completed per month
+![velocity](docs/velocity.png "velocity")
 
+Phased cycle time
+![phased cycle time](docs/phasedCycleTime.png "Phased Cycle Time")
+
+Work Type ratio
+![work type distribution](docs/workType.png "work type")
+
+Annotated Burnup
+![burnup](docs/burnup.png "burnup")
 
 # Installation
 
