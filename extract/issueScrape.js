@@ -190,6 +190,10 @@ function writeCSVOutput(bootstrap, next) {
         //if (k == "previousTime") return null;
         return "secondsInColumns."+k })
     );
+    var fields = fields.concat(bootstrap.getTransitions.map(function(k) {
+        //if (k == "previousTime") return null;
+        return "redoForColumns."+k })
+    );
     var fields = fields.filter(function(f) { return f });
 
     writeCSV(bootstrap.bootstrap.project, bootstrap.getIssues, fields, next)
@@ -212,8 +216,8 @@ function extractIssueData(customFields, issue) {
     var firstCreated = issue.fields.created;
 
     //Change in column is signified by the status field on a ChangeHistItem
-    //Pick those out then work out the time differences to add it to the 'from column'
-    var timeInColumns = change.filter(function(changeHist) {
+    //Pick those out then... work out the time differences to add it to the 'from column'
+    var statusChanges = change.filter(function(changeHist) {
 
 //WARNING Filter modifies changeHist.items
         changeHist.items = changeHist.items.filter(function(chi) {
@@ -221,7 +225,9 @@ function extractIssueData(customFields, issue) {
         });
 
         return changeHist.items.length == 1 && changeHist.items[0].field == 'status';
-    }).reduce(function(timeInColumns, changeHist) {
+    });
+    //then... work out the time differences to add it to the 'from column'
+    var timeInColumns = statusChanges.reduce(function(timeInColumns, changeHist) {
         if (changeHist.items.length > 1) {
             console.log("WARN");
             console.log("changelog.items has more than one item:");
@@ -248,6 +254,16 @@ function extractIssueData(customFields, issue) {
     },
     //Initialise reduce with the firstCreated time
     {"previousTime": firstCreated}
+    )
+
+    var redoForColumns = statusChanges.reduce(function(redoForColumns, changeHist) {
+
+        var newColumn = changeHist.items[0].toString;
+        redoForColumns[newColumn] = redoForColumns[newColumn] + 1 || 1;
+        return redoForColumns;
+    },
+    //Initialise
+    {}
     )
 
     //Do we want csv to include a pretty printed time? probably not
@@ -282,6 +298,7 @@ process.stdout.write(".");
         status: status,
         created: firstCreated,
         secondsInColumns: timeInColumns,
+        redoForColumns: redoForColumns,
         //timeInColumns: formatTimeInColumns
     }
 

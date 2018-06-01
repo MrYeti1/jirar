@@ -33,6 +33,10 @@ describe("singleIssue", function() {
                 secondsInColumns: {
                     "Open": 1582000,
                     "3 Amigos In": 1108070000
+                },
+                redoForColumns: {
+                    "3 Amigos In": 1,
+                    "3 Amigos Out": 1
                 }
             }
             assert.deepEqual(res, exp);
@@ -66,6 +70,18 @@ describe("singleIssue - Multiple Transitions", function() {
                    "Implementation Out": 173884000,
                    "Test In": 78452000,
                    "Test Out": 84829000
+                },
+                redoForColumns: {
+                   "Code Review / Demo In": 2,
+                   "Code Review / Demo Out": 2,
+                   "Deploy": 1,
+                   "Elaboration  Out": 1,
+                   "Elaboration In": 1,
+                   "Implementation In": 2,
+                   "Implementation Out": 3,
+                   "Test In": 2,
+                   "Test Out": 1,
+                   "Done": 1
                 }
             }
             delete res.resolution;
