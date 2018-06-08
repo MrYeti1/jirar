@@ -184,14 +184,13 @@ function writeCSVOutput(bootstrap, next) {
     };
 
 //console.log(issueData[0]);
-    var fields = ["key", "summary", "created", "resolution", "resolutionDate", "workType", "epicLink", "status", "ticketType", "spend"];
+    var fields = ["key", "summary", "created", "resolution", "resolutionDate", "status", "ticketType"];
+    var fields = fields.concat(Object.keys(require('./customFields.js')));
 
     var fields = fields.concat(bootstrap.getTransitions.map(function(k) {
-        //if (k == "previousTime") return null;
         return "secondsInColumns."+k })
     );
     var fields = fields.concat(bootstrap.getTransitions.map(function(k) {
-        //if (k == "previousTime") return null;
         return "redoForColumns."+k })
     );
     var fields = fields.filter(function(f) { return f });

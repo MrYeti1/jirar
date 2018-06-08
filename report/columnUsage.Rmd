@@ -12,7 +12,7 @@ source("columnGuess.R")
 
 ```{r, echo=FALSE, warning=FALSE, error=FALSE}
 project <- Sys.getenv("PROJECT", NA)
-project <- "TSI"
+project <- "BMA"
 if(is.na(project)) {
   project <- ""
 } else { 
@@ -66,7 +66,11 @@ library(forcats)
 #ggplot(blah, aes(x=L1, y=value)) + 
 #  geom_col() + theme(legend.position = "bottom", axis.text.x = element_text(angle=60, hjust=1)) + ggtitle("Redo Usage") + #xlab("Column") +ylab("Number of tickets") + scale_x_discrete(labels=statusLabels)
 
-ggplot(resolvedTickets %>% select(contains("redoForColumns")) %>% as.list() %>% melt(), aes(x=L1, y=value)) + geom_jitter()
+clah <- resolvedTickets %>% select(contains("redoForColumns")) %>% as.list() %>% melt()
+clah$L1 <- forcats::fct_inorder(clah$L1)
+statusLabels <- gsub("redoForColumns.", "", clah$L1)
+names(statusLabels) <- clah$L1
+ggplot(clah, aes(x=L1, y=value)) + geom_jitter(height=0.4, width=0.4, alpha=0.5) + scale_x_discrete(labels=statusLabels) + theme(axis.text.x = element_text(angle=60, hjust=1))
 
 resolvedRedoTickets <- resolvedTickets %>% mutate(
   transitionCount = select(., contains("redoForColumns")) %>% apply(1, sum, na.rm=T),
@@ -80,8 +84,9 @@ redoMonthGroup <- resolvedRedoTickets %>% group_by(resolutionMonthDisplay) %>% s
   count = n(),
   nonCount = sum(redoCount == 0),
   redoPercent = sum(redoCount > 1) / count,
-  redoCount = sum(redoCount >1)
-  ) %>% na.omit()
+  redoCount = sum(redoCount >1),
+  storyPoints = sum(storyPoints, na.rm=T)
+  ) %>% filter(!is.na(resolutionMonthDisplay))
 redoMonthGroup %>% knitr::kable()
 
 ggplot(redoMonthGroup, aes(x=resolutionMonthDisplay, y=redoPercent, group=1)) + 
@@ -94,15 +99,12 @@ ggplot(redoMonthGroup, aes(x=resolutionMonthDisplay, y=redoPercent, group=1)) +
   coord_cartesian(ylim=c(0, max(redoMonthGroup$redoPercent)*1.2), expand=T) + 
   ggtitle("Percentage of completed tickets with Redo", subtitle="Number = Count of tickets with Redo")
 
-ggplot(redoMonthGroup, aes(x=resolutionMonthDisplay)) + geom_line(aes(y=count, group=1), color="Blue", show.legend = T) + geom_line(aes(y=redoCount, group=2), color="red", show.legend = T) + ggrepel::geom_text_repel(aes(y=redoCount, label=redoPercent %>% round(2) %>% scales::percent() ), direction="y") + theme(axis.text.x = element_text(angle=60, hjust=1)) + ylab("Number of tickets") + xlab("Month") + ggtitle("Tickets resolved & Tickets with Redo work") + scale_y_continuous(breaks = seq(0,1000,10))
-
-
-ggplot(redoMonthGroup %>% select(resolutionMonthDisplay, redoCount, count) %>% reshape2::melt(id="resolutionMonthDisplay"), aes(x=resolutionMonthDisplay)) + geom_line(aes(y=value, color=variable, group=variable)) + 
+ggplot(redoMonthGroup %>% select(resolutionMonthDisplay, storyPoints, count, redoCount) %>% reshape2::melt(id="resolutionMonthDisplay"), aes(x=resolutionMonthDisplay)) + geom_line(aes(y=value, color=variable, group=variable)) + 
   ggrepel::geom_text_repel(data= redoMonthGroup, aes(y=redoCount, label=redoPercent %>% round(2) %>% scales::percent() ), direction="y") + 
-  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position = "bottom") + ylab("Number of tickets") + xlab("Month") + ggtitle("Tickets resolved & Tickets with Redo work") + scale_y_continuous(breaks = seq(0,1000,10)) + scale_color_discrete(labels = c("count"="Resolved", "redoCount" = "With Redo"), name="Tickets") + guides(colour = guide_legend(reverse=T))
+  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position = "bottom") + ylab("Number of tickets / Story Points") + xlab("Month") + ggtitle("Velocity & Tickets with Redo work") + scale_y_continuous(breaks = seq(0,1000,10)) + scale_color_manual(labels = c("storyPoints" = "Story Points", "count"="Resolved", "redoCount" = "With Redo"), values=c("redoCount"="#fc8d62", "count"="#8da0cb", "storyPoints"="#66c2a5"), name="Tickets")
 
 
-ggplot(resolvedRedoTickets, aes(x=resolutionDate, y=0, size=redoCount)) + ggbeeswarm::geom_quasirandom(groupOnX=F, side=1)
+ggplot(resolvedRedoTickets %>% filter(redoCount > 0), aes(x=resolutionDate, y=0, size=redoCount)) + ggbeeswarm::geom_quasirandom(groupOnX=F, side=1)
 ggplot(resolvedRedoTickets, aes(x=resolutionMonthDisplay, y=0, size=redoCount)) + ggforce::geom_sina()
 ```
 

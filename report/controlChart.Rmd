@@ -11,7 +11,7 @@ library(lubridate)
 ```{r, echo=FALSE, warning=FALSE, error=FALSE}
 
 project <- Sys.getenv("PROJECT", NA)
-#project <- "SKY"
+project <- "BMA"
 if(is.na(project)) {
   project <- ""
 } else { 
@@ -34,7 +34,7 @@ tsTickets <- read.csv(datasetFile, header=T, skipNul=T, na.strings="") %>%
 
 #Get all "SecondsInColumns" data, then drop columns where we aren't working on it
 workedColumns <- tsTickets %>% select(starts_with("SecondsInColumn")) %>%
-  select( -one_of(c("secondsInColumns.Backlog", "secondsInColumns.Next.Up", "secondsInColumns.New", "secondsInColumns.Done", "secondsInColumns.Closed", "secondsInColumns.Resolved", "secondsInColumns.Open", "secondsInColumns.Reopened")))
+  select( -one_of(c("secondsInColumns.Work.Backlog", "secondsInColumns.Backlog", "secondsInColumns.Next.Up", "secondsInColumns.New", "secondsInColumns.Done", "secondsInColumns.Closed", "secondsInColumns.Resolved", "secondsInColumns.Open", "secondsInColumns.Reopened")))
 
 
 ```
@@ -72,6 +72,12 @@ ggplot(filter(tsTickets, ! is.na(resolutionMonthDisplay)), aes(x=resolutionMonth
   theme(axis.text.x = element_text(angle=60, hjust=1)) +
   ggtitle("Velocity Violin Distribution - Worked Time") + xlab("Resolution Month") + ylab("Days")
 
+```
+
+
+```{r}
+ggplot(filter(tsTickets, ! is.na(resolutionDate)) %>% filter(workTime < quantile(workTime, 0.95)), aes(x=storyPoints, group=storyPoints, y=workTime/24/60/60/1000)) + geom_violin() + ggbeeswarm::geom_quasirandom(alpha=0.3, size=0.5) + ggtitle("Story Size vs Work Time", subtitle("Excluding longest 5% of tickets")) + ylab("Days")
+ggplot(filter(tsTickets, ! is.na(resolutionDate)), aes(x=storyPoints, group=storyPoints, y=totalTime/24/60/60)) + geom_violin() + ggbeeswarm::geom_quasirandom(alpha=0.3, size=0.5)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, error=FALSE, message=F, fig.height=6}

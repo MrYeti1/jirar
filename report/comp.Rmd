@@ -30,7 +30,7 @@ tsTickets <- read.csv(datasetFile, header=T, skipNul=T, na.strings="") %>%
     resolutionMonth = as.numeric(format(resolutionDate, format="%Y%m")),
     totalTime = resolutionDate - created
   ) %>% filter(status != "Closed") %>% filter(status != "to do") %>% filter(status != "open") %>% filter(ticketType != "Epic") %>%
-  select(-spend, -one_of(c("secondsInColumns.Open", "secondsInColumns.New", "secondsInColumns.Next.Up", "secondsInColumns.Backlog", "secondsInColumns.Resolved", "secondsInColumns.Reopened", "secondsInColumns.Closed", "secondsInColumns.Done", "secondsInColumns.Coming.Next"))) 
+  select(-spend, -one_of(c("secondsInColumns.Open", "secondsInColumns.New", "secondsInColumns.Next.Up", "secondsInColumns.Work.Backlog", "secondsInColumns.Backlog", "secondsInColumns.Resolved", "secondsInColumns.Reopened", "secondsInColumns.Closed", "secondsInColumns.Done", "secondsInColumns.Coming.Next"))) 
 ```
 
 ```{r}
