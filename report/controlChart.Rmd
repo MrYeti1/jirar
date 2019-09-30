@@ -6,12 +6,14 @@ library(ggplot2)
 library(dplyr)
 library(reshape2)
 library(lubridate)
+library(forcats)
+
 ```
 
 ```{r, echo=FALSE, warning=FALSE, error=FALSE}
 
 project <- Sys.getenv("PROJECT", NA)
-#project <- "SKY"
+#project <- "PM"
 if(is.na(project)) {
   project <- ""
 } else { 
@@ -21,11 +23,11 @@ datasetFile <- paste0("../jiraData/jiraRDataset", project, ".csv")
 
 tsTickets <- read.csv(datasetFile, header=T, skipNul=T, na.strings="") %>%
   mutate(
-    created = as.POSIXct(created), 
+    createdDate = as.POSIXct(created), 
     resolutionDate = as.POSIXct(resolutionDate),
     resolutionMonth = as.numeric(format(resolutionDate, format="%Y%m")),
     resolutionMonthDisplay = format(resolutionDate, format="%Y %B"),
-    totalTime = resolutionDate - created
+    totalTime = resolutionDate - createdDate
   ) %>% 
   filter(status != "Closed") %>% 
   filter(status != "to do") %>% 
@@ -33,9 +35,17 @@ tsTickets <- read.csv(datasetFile, header=T, skipNul=T, na.strings="") %>%
   filter(ticketType != "Epic")%>% arrange(resolutionMonth)
 
 #Get all "SecondsInColumns" data, then drop columns where we aren't working on it
-workedColumns <- tsTickets %>% select(starts_with("SecondsInColumn")) %>%
-  select( -one_of(c("secondsInColumns.Backlog", "secondsInColumns.Next.Up", "secondsInColumns.New", "secondsInColumns.Done", "secondsInColumns.Closed", "secondsInColumns.Resolved", "secondsInColumns.Open", "secondsInColumns.Reopened")))
+workedColNames = c("In.Progress", "In.Dev")
+#select( -one_of(c("secondsInColumns.Backlog", "secondsInColumns.Next.Up", "secondsInColumns.New", "secondsInColumns.Done", "secondsInColumns.Closed", "secondsInColumns.Resolved", "secondsInColumns.Open", "secondsInColumns.Reopened", "secondsInColumns.Selected.for.Development")))
 
+workedColumns <- tsTickets %>% 
+  select(starts_with("SecondsInColumn")) %>%
+  select(one_of(paste0("secondsInColumns.", workedColNames)))
+
+leftWorkedColumns <- tsTickets %>% 
+  select(starts_with("leftColumnDate")) %>%
+  select(one_of(paste0("leftColumnDate.", workedColNames)))
+  
 
 ```
 
@@ -92,31 +102,44 @@ controlColumns <- bind_cols(select(tsTickets, key, resolutionDate), workedColumn
 
 if (nrow(controlColumns) > 0) {
   #Melt for plotting
-  workedMelt <- melt(controlColumns, id=c("key", "resolutionDate"))
+  workedMelt <- melt(controlColumns, id=c("key", "resolutionDate")) %>% 
+    mutate(variable = gsub("secondsInColumns.", "", variable))
 
+  leftCols <- bind_cols(select(tsTickets, key, resolutionDate), leftWorkedColumns)
+  leftMelt <- melt(leftCols, id=c("key", "resolutionDate"), value.name = "leaveDate") %>%
+    mutate(variable = gsub("leftColumnDate.", "", variable))
 
+  leavingDateMelt <- left_join(workedMelt, leftMelt, by=c('key', "resolutionDate", "variable"))
+  
   base_breaks <- function(n = 10){
       function(x) {
           axisTicks(log10(range(x, na.rm = TRUE)), log = TRUE, nint = n)
       }
   }
 
-  ggplot(workedMelt, aes(x=resolutionDate, y=value/1000/60/60/24, color=variable)) + geom_point() + ylab("Hours") + xlab("Resolution Date") + facet_wrap(~variable, ncol=2, scales="free_y") +
+  ggplot(workedMelt, aes(x=resolutionDate, y=value/1000/60/60/24, color=paste0("secondsInColumns.",variable))) + geom_point() + ylab("Hours") + xlab("Resolution Date") + facet_wrap(~variable, ncol=2, scales="free_y") +
     scale_color_manual(values=guessedStatusColours, na.value="gray", labels=statusLabels, name="Column") + theme(legend.position="None") + geom_smooth(na.rm = T, se=T) +
     scale_y_continuous(labels=prettyNum)
 }
+```
+  
+```{r, echo=FALSE, warning=FALSE, error=FALSE, message=F, fig.height=6}
+if (nrow(controlColumns) > 0) { 
+ ggplot(leavingDateMelt, aes(x=as.POSIXct(leaveDate), y=value/1000/60/60/24, color=paste0("secondsInColumns.",variable))) + geom_point() + ylab("Hours") + xlab("Left Column Date") + facet_wrap(~variable, ncol=2, scales="free_y") +
+    scale_color_manual(values=guessedStatusColours, na.value="gray", labels=statusLabels, name="Column") + theme(legend.position="None") + geom_smooth(na.rm = T, se=T) +
+    scale_y_continuous(labels=prettyNum)
 
+}
 ```
 
 # Capex/Opex distributions
 
 ```{r, echo=F}
-library(forcats)
   classOfWorkTickets <- tsTickets %>% arrange(resolutionMonth)
   classOfWorkTickets$resolutionMonthDisplay <- factor(tsTickets[order(tsTickets$resolutionMonth), "resolutionMonthDisplay"], levels=unique(tsTickets[order(tsTickets$resolutionMonth), "resolutionMonthDisplay"]))
   
   #Reorder so capex is on the bottom, NA on the top
-  classOfWorkTickets$spendDisplay <- fct_relevel(fct_explicit_na(addNA(classOfWorkTickets$spend), "NA"), "NA", "OPEX", "CAPEX")
+  suppressWarnings(classOfWorkTickets$spendDisplay <- fct_relevel(fct_explicit_na(addNA(classOfWorkTickets$spend), "NA"), "NA", "OPEX", "CAPEX"))
   
  if (levels(classOfWorkTickets$spendDisplay) %>% length() > 1) {
 
@@ -125,7 +148,7 @@ library(forcats)
 #    geom_bar(stat="count", position="fill") + theme(legend.position = "bottom", axis.text.x = element_text(angle=60, hjust=1)) + 
 #    ggtitle("Spend Distribution - Completed Tickets") + xlab("Resolution Month") + ylab("Spend %")
   
-    ggplot(filter(classOfWorkTickets, ! is.na(resolutionMonthDisplay)), aes(x=resolutionMonthDisplay, y=workTime, fill=spendDisplay)) + scale_fill_manual(name=NULL, values=c("OPEX"="#F8766D", "CAPEX"="#00BFC4", "NA"="grey50")) +
+    ggplot(filter(classOfWorkTickets, ! is.na(resolutionMonthDisplay)), aes(x=resolutionMonthDisplay, y=workTime, fill=spendDisplay)) + scale_fill_manual(name=NULL, values=c("OPEX"="#F8766D", "CAPEX"="#00BFC4", "NA"="grey50", "Known"="#fc8d62", "Mixed"="#8da0cb", "Unknown"="#66c2a5")) +
     geom_bar(position="fill", stat="identity") + theme(legend.position = "bottom", axis.text.x = element_text(angle=60, hjust=1)) + 
     ggtitle("Spend Distribution - Worked Time") + xlab("Resolution Month") + ylab("Spend %")
  }

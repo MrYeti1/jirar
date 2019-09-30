@@ -11,7 +11,7 @@ source("columnGuess.R")
 
 ```{r, echo=FALSE, warning=FALSE, error=FALSE}
 project <- Sys.getenv("PROJECT", NA)
-#project <- "SKY"
+project <- "PM"
 if(is.na(project)) {
   project <- ""
 } else { 
@@ -30,7 +30,7 @@ tsTickets <- read.csv(datasetFile, header=T, skipNul=T, na.strings="") %>%
     resolutionMonth = as.numeric(format(resolutionDate, format="%Y%m")),
     totalTime = resolutionDate - created
   ) %>% filter(status != "Closed") %>% filter(status != "to do") %>% filter(status != "open") %>% filter(ticketType != "Epic") %>%
-  select( -totalTime, -spend, -one_of(c("secondsInColumns.Open", "secondsInColumns.New", "secondsInColumns.Next.Up", "secondsInColumns.Backlog", "secondsInColumns.Resolved", "secondsInColumns.Reopened", "secondsInColumns.Closed", "secondsInColumns.Done", "secondsInColumns.Coming.Next"))) 
+  select( -totalTime, -spend, -starts_with("leftColumnDate"), -one_of(c("secondsInColumns.Open", "secondsInColumns.New", "secondsInColumns.Next.Up", "secondsInColumns.Backlog", "secondsInColumns.Resolved", "secondsInColumns.Reopened", "secondsInColumns.Closed", "secondsInColumns.Done", "secondsInColumns.Coming.Next"))) 
 
 
 
@@ -39,7 +39,7 @@ summaryResolved <- tsTickets %>%
   select(-status, -ticketType, -epicLink, -created, -createdMonth, -createdMonthDisplay, -summary, -key, -resolution, -resolutionDate, -workType) %>% 
   arrange(resolutionMonth) %>%
   group_by(resolutionMonth, resolutionMonthDisplay) %>%
-  summarise_all(funs(median(., na.rm = TRUE)))
+  summarise_all(list(~ median(., na.rm = TRUE)))
 
 summaryResolvedMelt <- melt(summaryResolved, id=c("resolutionMonthDisplay", "resolutionMonth")) %>% arrange(resolutionMonth)
 #Factorise and sort the columns in reverse, so that 3Amigos is towards the left/bottom

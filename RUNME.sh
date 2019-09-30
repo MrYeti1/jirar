@@ -36,7 +36,7 @@ fi
 #Source in the $JIRAREST and $CONFLUENCEREST variables
 . ./atlassianDetails.sh
 
-DEVMODE=false
+DEVMODE=true
 if $DEVMODE
 then
     SECRET=$SECRET PROJECT=$SQUAD JIRAREST=$JIRAREST docker run -e SECRET -e PROJECT -e JIRAREST -v $(pwd)/jiraData/:/usr/src/app/jiraData/ -v $(pwd)/extract/boardList.js:/usr/src/app/boardList.js  -v $(pwd)/extract/customFields.js:/usr/src/app/customFields.js jirar-extract:dev
